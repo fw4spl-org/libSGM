@@ -22,12 +22,15 @@ namespace sgm {
 	namespace details {
 
 		void median_filter(const uint16_t* d_src, uint16_t* d_dst, void* median_filter_buffer, int width, int height) {
-			NppiSize roi = { width, height };
+			NppiSize roi = { width - 2, height - 2 };
 			NppiSize mask = { 3, 3 };
-			NppiPoint anchor = { 0, 0 };
+			NppiPoint anchor = { 1, 1 };
 
-			NppStatus status = nppiFilterMedian_16u_C1R(d_src, sizeof(Npp16u) * width, d_dst, sizeof(Npp16u) * width, roi, mask, anchor, (Npp8u*)median_filter_buffer);
-			
+			NppStatus status =
+                nppiFilterMedian_16u_C1R(d_src + 1 + width, sizeof(Npp16u) * width,
+                                         d_dst + 1 + width, sizeof(Npp16u) * width,
+                                         roi, mask, anchor, (Npp8u*)median_filter_buffer);
+
 			assert(status == 0);
 		}
 
