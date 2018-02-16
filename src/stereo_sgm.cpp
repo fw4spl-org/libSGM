@@ -35,6 +35,8 @@ namespace sgm {
 		void* d_matching_cost;
 		void* d_left_disp;
 		void* d_right_disp;
+		void* d_left_disp_padded;
+		void* d_right_disp_padded;
 
 		void* d_tmp_left_disp;
 		void* d_tmp_right_disp;
@@ -57,7 +59,6 @@ namespace sgm {
 				CudaSafeCall(cudaMalloc(&this->d_src_left, input_depth_bits_ / 8 * width_ * height_));
 				CudaSafeCall(cudaMalloc(&this->d_src_right, input_depth_bits_ / 8 * width_ * height_));
 			}
-			
 
 			CudaSafeCall(cudaMalloc(&this->d_left, sizeof(uint64_t) * width_ * height_));
 			CudaSafeCall(cudaMalloc(&this->d_right, sizeof(uint64_t) * width_ * height_));
@@ -68,6 +69,9 @@ namespace sgm {
 
 			CudaSafeCall(cudaMalloc(&this->d_left_disp, sizeof(uint16_t) * width_ * height_));
 			CudaSafeCall(cudaMalloc(&this->d_right_disp, sizeof(uint16_t) * width_ * height_));
+
+			CudaSafeCall(cudaMalloc(&this->d_left_disp_padded, sizeof(uint16_t) * (width_ + 2) * (height_ + 2)));
+			CudaSafeCall(cudaMalloc(&this->d_right_disp_padded, sizeof(uint16_t) * (width_ + 2) * (height_ + 2)));
 
 			CudaSafeCall(cudaMalloc(&this->d_tmp_left_disp, sizeof(uint16_t) * width_ * height_));
 			CudaSafeCall(cudaMalloc(&this->d_tmp_right_disp, sizeof(uint16_t) * width_ * height_));
@@ -184,8 +188,18 @@ namespace sgm {
 
 		sgm::details::winner_takes_all((const uint16_t*)cu_res_->d_scost, (uint16_t*)cu_res_->d_left_disp, (uint16_t*)cu_res_->d_right_disp, width_, height_, disparity_size_);
 
-		sgm::details::median_filter((uint16_t*)cu_res_->d_left_disp, (uint16_t*)cu_res_->d_tmp_left_disp, cu_res_->d_median_filter_buffer, width_, height_);
-		sgm::details::median_filter((uint16_t*)cu_res_->d_right_disp, (uint16_t*)cu_res_->d_tmp_right_disp, cu_res_->d_median_filter_buffer, width_, height_);
+		// Pad the images prior to applying the median filter
+		NppiSize padSrcRoi = { width_ + 2, height_ + 2 };
+		NppiSize padDstRoi = { width_, height_ };
+		nppiCopyReplicateBorder_16u_C1R((Npp16u*)cu_res_->d_left_disp, sizeof(Npp16u) * width_, padSrcRoi,
+										(Npp16u*)cu_res_->d_left_disp_padded, sizeof(Npp16u) * (width_ + 2), padDstRoi,
+										1, 1);
+		nppiCopyReplicateBorder_16u_C1R((Npp16u*)cu_res_->d_right_disp, sizeof(Npp16u) * width_, padSrcRoi,
+										(Npp16u*)cu_res_->d_right_disp_padded, sizeof(Npp16u) * (width_ + 2), padDstRoi,
+										1, 1);
+
+		sgm::details::median_filter((uint16_t*)cu_res_->d_left_disp_padded, (uint16_t*)cu_res_->d_tmp_left_disp, cu_res_->d_median_filter_buffer, width_ + 2, height_ + 2);
+		sgm::details::median_filter((uint16_t*)cu_res_->d_right_disp_padded, (uint16_t*)cu_res_->d_tmp_right_disp, cu_res_->d_median_filter_buffer, width_ + 2, height_ + 2);
 
 		sgm::details::check_consistency((uint16_t*)cu_res_->d_tmp_left_disp, (uint16_t*)cu_res_->d_tmp_right_disp, d_input_left, width_, height_, input_depth_bits_);
 

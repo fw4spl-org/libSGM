@@ -28,7 +28,7 @@ namespace sgm {
 
 			NppStatus status =
                 nppiFilterMedian_16u_C1R(d_src + 1 + width, sizeof(Npp16u) * width,
-                                         d_dst + 1 + width, sizeof(Npp16u) * width,
+                                         d_dst, sizeof(Npp16u) * (width - 2),
                                          roi, mask, anchor, (Npp8u*)median_filter_buffer);
 
 			assert(status == 0);
