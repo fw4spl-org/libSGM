@@ -25,6 +25,7 @@ limitations under the License.
 
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
+#include <nppi.h>
 
 #define CudaSafeCall(error) sgm::details::cuda_safe_call(error, __FILE__, __LINE__)
 

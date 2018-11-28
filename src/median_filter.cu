@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <nppi.h>
-
 #include "internal.h"
 
 namespace sgm {

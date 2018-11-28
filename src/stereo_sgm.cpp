@@ -16,8 +16,6 @@ limitations under the License.
 
 #include <iostream>
 
-#include <nppi.h>
-
 #include <libsgm.h>
 
 #include "internal.h"
