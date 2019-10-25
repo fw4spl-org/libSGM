@@ -21,8 +21,8 @@ limitations under the License.
 namespace {
 	__device__ inline uint64_t shfl_u64(uint64_t x, int lane) {
 		int2 a = *reinterpret_cast<int2*>(&x);
-		a.x = __shfl(a.x, lane);
-		a.y = __shfl(a.y, lane);
+        a.x = __shfl_sync(0xFFFFFFFF,a.x, lane);
+        a.y = __shfl_sync(0xFFFFFFFF,a.y, lane);
 		uint64_t* out = reinterpret_cast<uint64_t*>(&a);;
 		return *out;
 	}
